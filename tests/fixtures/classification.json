@@ -1,0 +1,122 @@
+[
+  {
+    "text": "Agent memory with learned write policies",
+    "expected": "agent"
+  },
+  {
+    "text": "Tool-using agents for web navigation",
+    "expected": "agent"
+  },
+  {
+    "text": "Planning agents under partial observability",
+    "expected": "agent"
+  },
+  {
+    "text": "Multi-agent coordination with shared memory",
+    "expected": "agent"
+  },
+  {
+    "text": "Reliable agent execution and recovery",
+    "expected": "agent"
+  },
+  {
+    "text": "Agent evaluation in interactive tasks",
+    "expected": "agent"
+  },
+  {
+    "text": "Agents that learn from past episodes",
+    "expected": "agent"
+  },
+  {
+    "text": "Coding agents for repository repair",
+    "expected": "agent"
+  },
+  {
+    "text": "An agent framework for scientific workflows",
+    "expected": "agent"
+  },
+  {
+    "text": "Agent safety under malicious tool outputs",
+    "expected": "agent"
+  },
+  {
+    "text": "RAG with learned retrieval policies",
+    "expected": "rag"
+  },
+  {
+    "text": "Retrieval-augmented generation with citations",
+    "expected": "rag"
+  },
+  {
+    "text": "Graph RAG for document relationships",
+    "expected": "rag"
+  },
+  {
+    "text": "RAG evaluation of faithful answers",
+    "expected": "rag"
+  },
+  {
+    "text": "Multimodal retrieval augmented generation",
+    "expected": "rag"
+  },
+  {
+    "text": "Agentic RAG with adaptive queries",
+    "expected": "rag"
+  },
+  {
+    "text": "RAG reranking with late interaction",
+    "expected": "rag"
+  },
+  {
+    "text": "Retrieval-augmented question answering",
+    "expected": "rag"
+  },
+  {
+    "text": "RAG failure analysis on long documents",
+    "expected": "rag"
+  },
+  {
+    "text": "Efficient retrieval augmented generation",
+    "expected": "rag"
+  },
+  {
+    "text": "Reasoning with verifiable intermediate steps",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Chain-of-thought for arithmetic tasks",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Test-time compute scaling in language models",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Reasoning through self-correction",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Reasoning under distribution shift",
+    "expected": "reasoning"
+  },
+  {
+    "text": "A benchmark for formal reasoning",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Reasoning with external verification",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Reward models for reasoning traces",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Reasoning depth and inference budgets",
+    "expected": "reasoning"
+  },
+  {
+    "text": "Multi-step reasoning on structured data",
+    "expected": "reasoning"
+  }
+]

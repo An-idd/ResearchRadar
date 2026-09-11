@@ -1,0 +1,12 @@
+[
+  {"slug":"agent","name":"LLM Agents","description":"Language model agents and planning","keywords":["agent","agents","planning"],"parent":null},
+  {"slug":"agent-memory","name":"Agent Memory","description":"Persistent agent memory","keywords":["agent memory","episodic memory","memory retrieval"],"parent":"agent"},
+  {"slug":"tool-use","name":"Tool Use","description":"Tools and protocols","keywords":["tool use","tool calling","function calling","model context protocol"],"parent":"agent"},
+  {"slug":"multi-agent","name":"Multi-Agent","description":"Cooperating agents","keywords":["multi-agent","multi agent"],"parent":"agent"},
+  {"slug":"rag","name":"RAG","description":"Retrieval augmented generation","keywords":["rag","retrieval-augmented","retrieval augmented"],"parent":null},
+  {"slug":"agentic-rag","name":"Agentic RAG","description":"Agent driven retrieval","keywords":["agentic rag","agentic retrieval"],"parent":"rag"},
+  {"slug":"reasoning","name":"Reasoning","description":"Reasoning and test-time compute","keywords":["reasoning","chain-of-thought","test-time compute","self-correction"],"parent":null},
+  {"slug":"context-engineering","name":"Context Engineering","description":"Context construction and compression","keywords":["context engineering","context compression","long context","kv cache"],"parent":null},
+  {"slug":"evaluation","name":"LLM Evaluation","description":"LLM evaluation and benchmarks","keywords":["evaluation","benchmark","llm judge"],"parent":null},
+  {"slug":"ai-coding","name":"AI Coding Agents","description":"Code generation and coding agents","keywords":["coding agent","code generation","software engineering","swe-bench"],"parent":"agent"}
+]

@@ -1,0 +1,13 @@
+node_modules/
+.neon
+.env.local
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/
+*.egg-info/
+*.log

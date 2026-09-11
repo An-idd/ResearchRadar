@@ -1,0 +1,6 @@
+{
+  "new": {"relevance": 0.45, "freshness": 0.30, "novelty": 0.15, "source_quality": 0.10},
+  "hot": {"relevance": 0.25, "hf_upvotes": 0.25, "citation_count": 0.25, "openreview_rating": 0.15, "freshness": 0.10},
+  "decay_hours": 72,
+  "metric_scales": {"hf_upvotes": 100, "citation_count": 1000, "openreview_rating": 10}
+}

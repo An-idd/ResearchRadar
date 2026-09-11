@@ -6,15 +6,18 @@
 
 ## 1. 当前状态与目标
 
-当前项目仅包含上述三份规范文档，尚无应用代码、项目依赖配置或测试；当前目录不是 Git 仓库。
+2026-09-11 更新：已初始化 Git，安装 Neon CLI、技能与 MCP，并关联项目 `square-fog-91407295`。本轮按用户要求实现 Phase 0–11 的完整 MVP，各阶段依次实现并验证。
 
-本次交付仅为实施计划，不启动代码开发。后续按 TASKS.md 的阶段逐项实施，每阶段完成验收后结束当前任务，不自动进入下一阶段。
+本轮交付包括开发文档、实现、测试及 Neon 开发分支验收；不进入 Phase 12 及以后。
 
 MVP 的用户场景：用户查询 Agent / RAG / Reasoning 最近 7 天的研究，能够看到 New / Hot 榜、论文贡献、相对已有工作的变化和可追溯的原文证据。
 
 MVP 完成边界为 TASKS.md 的 Phase 0–11。ResearchEvent、Timeline、个性化、Digest 和 Trend 属于后续阶段；不纳入首个版本。注意 DEVELOPMENT.md 的产品“Phase 2”和 TASKS.md 的开发“Phase 2”含义不同，本计划的阶段编号均引用 TASKS.md。
 
 ## 2. 架构与实施约束
+
+- 开发数据库采用 Neon PostgreSQL：`development` 用于开发，`mvp-test` 用于自动化测试；`production` 不承载测试数据。配置与操作详见 [NEON.md](NEON.md)。
+- 默认 LLMProvider 调用已登录的本地 Codex CLI，通过 JSON Schema 输出，禁止论文内容调用工具；embedding 使用本地 CPU 模型，经 Provider 边界存入 pgvector。真实模型质量检查与免费 FakeLLMProvider 测试分别记录。
 
 - 使用模块化单体，采用 Python 3.12+、FastAPI、Pydantic v2、SQLAlchemy 2、PostgreSQL、Alembic、asyncio 和 httpx。
 - API 调用应用服务，服务编排领域逻辑与 Repository / Provider / Collector；领域规则不导入外部 SDK，路由不包含 SQL。
@@ -109,15 +112,8 @@ MVP 最终验收用例：Agent 最近 7 天，返回可解释的 New / Hot Top �
 | Phase 17 | Trend Engine | 基于论文、历史指标快照和事件计算趋势；处理缺失数据和采集覆盖变化。 |
 | Phase 18 | 可选 Idea Discovery | 在前述能力稳定并有明确需求后单独规划。 |
 
-## 8. 下一项任务：Phase 0
+## 8. 执行与验收记录
 
-建议下一次仅执行 Task 0.1：
+本轮用户已授权整个 MVP（Phase 0–11）。实现与验证结果见 [IMPLEMENTATION.md](IMPLEMENTATION.md)，运行说明见 [README](../README.md)。默认使用 Neon 开发分支和本地 Codex；不自动修改生产分支，不进入 Phase 12 及以后。
 
-1. 检查本地 Python、uv 和 PostgreSQL / 容器运行环境，确定可复现的开发与测试命令。
-2. 新建 pyproject.toml、锁文件、配置示例、忽略规则与 README；按规范建立必要包目录，不填充未来业务实现。
-3. 创建 FastAPI 应用工厂与 `/health`；配置通过 Pydantic Settings 读取，不提交密钥。
-4. 配置 SQLAlchemy 数据库访问基础、Alembic 和本地 PostgreSQL；领域表留到 Phase 1。
-5. 添加健康检查、配置与应用启动相关测试；运行 pytest、ruff、mypy。
-6. 按 Changed / Tests / Design decisions / Known limitations / Next task 汇报，以此结束任务。
-
-首个任务不接入真实论文源、不调用付费模型、不实现排名或摘要。当前还不是 Git 仓库，后续如需要按 TASKS.md 建议记录提交，先初始化版本管理；不在本次计划任务中创建提交。
+后续优先处理真实数据源的访问限制、模型质量抽样和更长时间窗口的 prior-paper 积累。新增功能仍需单独确定范围。

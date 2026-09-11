@@ -136,6 +136,8 @@ Daily / Weekly Digest
 
 ## Database
 
+本项目开发与集成测试使用 Neon PostgreSQL（项目 `square-fog-91407295`），操作约定见 [NEON.md](NEON.md)。SQLAlchemy 应用连接使用 pooled URL，Alembic 使用 unpooled URL；禁止应用启动时建表或迁移。
+
 MVP：
 
 - PostgreSQL
@@ -1172,6 +1174,8 @@ GET /api/v1/digests/weekly
 ---
 
 # 26. Provider Abstraction
+
+MVP 默认实现 `CodexLLMProvider`：调用本地已登录 Codex CLI，使用临时目录、只读沙箱、禁用工具与用户配置、JSON Schema 约束和 Pydantic 校验。它仍调用远程 Codex 模型服务，并非离线模型。另提供 OpenAI 兼容 HTTP Provider。语义向量独立采用本地 FastEmbed CPU 模型；测试使用 FakeLLMProvider 与 FakeEmbeddingProvider，不消耗模型服务额度。
 
 ```python
 class LLMProvider(Protocol):
