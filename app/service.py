@@ -4,7 +4,19 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.api_models import Feed, FeedItem, JobView, PaperDetail, PaperView, TopicView
+from app.api_models import (
+    Feed,
+    FeedItem,
+    GenerationView,
+    JobView,
+    MetricView,
+    PaperDetail,
+    PaperView,
+    SourceView,
+    SummaryPreview,
+    TopicView,
+)
+from app.domain import PaperComparison, PaperSummary
 from app.ranking import RankingConfig, rank_score
 from app.storage.intelligence import IntelligenceRepository
 from app.storage.models import AnalysisJob, Paper
@@ -56,7 +68,9 @@ class RadarService:
                     explanation=score,
                     topics=sorted(t.topic_slug for t in matches),
                     metrics=metrics.get(paper.id, {}),
-                    summary=summaries.get(paper.id),
+                    summary=SummaryPreview.model_validate(summaries[paper.id])
+                    if paper.id in summaries
+                    else None,
                 )
             )
         items.sort(
@@ -97,7 +111,9 @@ class RadarService:
             summary, comparison, job = (
                 data[k] for k in ("summary_record", "comparison_record", "job_record")
             )
-            status = "ready" if comparison else "not-generated"
+            status: Literal["ready", "not-generated", "insufficient-prior-papers"] = (
+                "ready" if comparison else "not-generated"
+            )
             if summary and not comparison:
                 priors = await IntelligenceRepository(session).prior_papers(data["paper"])
                 status = "not-generated" if priors else "insufficient-prior-papers"
@@ -105,40 +121,41 @@ class RadarService:
                 paper=paper_view(data["paper"]),
                 topics=data["topics"],
                 metrics=[
-                    {
-                        "name": m.name,
-                        "source": m.source,
-                        "value": m.value,
-                        "observed_at": m.observed_at,
-                    }
+                    MetricView(
+                        name=m.name, source=m.source, value=m.value, observed_at=m.observed_at
+                    )
                     for m in data["metrics"]
                 ],
                 sources=[
-                    {
-                        "source": s.source,
-                        "source_id": s.source_id,
-                        "raw": s.payload,
-                        "observed_at": s.observed_at,
-                    }
+                    SourceView(
+                        source=s.source,
+                        source_id=s.source_id,
+                        raw=s.payload,
+                        observed_at=s.observed_at,
+                    )
                     for s in data["sources"]
                 ],
-                summary=summary.payload if summary else None,
-                comparison=comparison.payload if comparison else None,
+                summary=PaperSummary.model_validate(summary.payload) if summary else None,
+                comparison=PaperComparison.model_validate(comparison.payload)
+                if comparison
+                else None,
                 comparison_status=status,
-                generation={
-                    "provider": summary.provider,
-                    "model": summary.model,
-                    "prompt_version": summary.prompt_version,
-                    "input_hash": summary.input_hash,
-                    "scope": summary.scope,
-                    "source_texts": summary.source_texts,
-                    "usage": summary.usage,
-                    "created_at": summary.created_at,
-                    "comparison_sources": comparison.source_texts if comparison else [],
-                }
+                generation=GenerationView.model_validate(
+                    {
+                        "provider": summary.provider,
+                        "model": summary.model,
+                        "prompt_version": summary.prompt_version,
+                        "input_hash": summary.input_hash,
+                        "scope": summary.scope,
+                        "source_texts": summary.source_texts,
+                        "usage": summary.usage,
+                        "created_at": summary.created_at,
+                        "comparison_sources": comparison.source_texts if comparison else [],
+                    }
+                )
                 if summary
                 else None,
-                job=job_view(job).model_dump(mode="json") if job else None,
+                job=job_view(job) if job else None,
             )
 
     async def enqueue(self, paper_id: UUID) -> JobView:

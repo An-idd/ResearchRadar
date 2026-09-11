@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
-from app.domain import Model
+from app.domain import Model, PaperComparison, PaperSummary, SourceText, Usage
 from app.ranking import Score
 
 
@@ -20,13 +20,20 @@ class PaperView(Model):
     venue: str | None
 
 
+class SummaryPreview(Model):
+    one_sentence: str
+    what_changed: str | None
+    scope: Literal["abstract-only", "full-text"]
+    generated_at: datetime
+
+
 class FeedItem(Model):
     paper: PaperView
     score: float | None
     explanation: Score
     topics: list[str]
     metrics: dict[str, float | None]
-    summary: dict[str, Any] | None
+    summary: SummaryPreview | None
 
 
 class Feed(Model):
@@ -38,25 +45,51 @@ class Feed(Model):
     until: datetime
 
 
-class PaperDetail(Model):
-    paper: PaperView
-    topics: list[str]
-    metrics: list[dict[str, Any]]
-    sources: list[dict[str, Any]]
-    summary: dict[str, Any] | None
-    comparison: dict[str, Any] | None
-    comparison_status: str
-    generation: dict[str, Any] | None
-    job: dict[str, Any] | None
-
-
 class JobView(Model):
     id: UUID
     paper_id: UUID
-    status: str
+    status: Literal["queued", "running", "succeeded", "skipped", "failed"]
     error: str | None
     attempts: int
     updated_at: datetime
+
+
+class MetricView(Model):
+    name: str
+    source: str
+    value: float | None
+    observed_at: datetime
+
+
+class SourceView(Model):
+    source: str
+    source_id: str
+    raw: dict[str, Any]
+    observed_at: datetime
+
+
+class GenerationView(Model):
+    provider: str
+    model: str
+    prompt_version: str
+    input_hash: str
+    scope: Literal["abstract-only", "full-text"]
+    source_texts: list[SourceText]
+    usage: Usage
+    created_at: datetime
+    comparison_sources: list[SourceText]
+
+
+class PaperDetail(Model):
+    paper: PaperView
+    topics: list[str]
+    metrics: list[MetricView]
+    sources: list[SourceView]
+    summary: PaperSummary | None
+    comparison: PaperComparison | None
+    comparison_status: Literal["ready", "not-generated", "insufficient-prior-papers"]
+    generation: GenerationView | None
+    job: JobView | None
 
 
 class TopicView(Model):

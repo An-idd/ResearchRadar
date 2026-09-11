@@ -123,6 +123,10 @@ Daily / Weekly Digest
 
 # 4. 技术栈
 
+## Frontend MVP
+
+React + TypeScript + Vite，独立目录 `frontend/`。仅通过 FastAPI 访问数据，使用 OpenAPI 生成响应类型；页面、任务交互、构建与测试约定见 [FRONTEND.md](FRONTEND.md)。根目录的 npm 依赖继续用于 Neon 工具。
+
 ## Backend
 
 - Python 3.12+

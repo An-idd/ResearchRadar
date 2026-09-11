@@ -114,6 +114,8 @@ MVP 最终验收用例：Agent 最近 7 天，返回可解释的 New / Hot Top �
 
 ## 8. 执行与验收记录
 
+2026-09-11 新增授权：按独立前端计划完成 Frontend MVP 六个阶段。页面、API 契约、任务状态、测试与运行方式见 [FRONTEND.md](FRONTEND.md)，Phase 12–18 仍在后续范围。
+
 本轮用户已授权整个 MVP（Phase 0–11）。实现与验证结果见 [IMPLEMENTATION.md](IMPLEMENTATION.md)，运行说明见 [README](../README.md)。默认使用 Neon 开发分支和本地 Codex；不自动修改生产分支，不进入 Phase 12 及以后。
 
 后续优先处理真实数据源的访问限制、模型质量抽样和更长时间窗口的 prior-paper 积累。新增功能仍需单独确定范围。

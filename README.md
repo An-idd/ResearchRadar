@@ -3,7 +3,21 @@
 基于 **Neon PostgreSQL + pgvector、本地 Codex CLI、本地 CPU embedding** 的研究情报 MVP。
 采集 arXiv、Hugging Face Papers、OpenReview，补充 Semantic Scholar 指标；提供 New / Hot Feed、主题过滤、结构化摘要、What Changed、已有工作比较及原文证据。
 
-范围是 [PLAN](doc/PLAN.md) 的 Phase 0–11。MVP 通过 API 和 Swagger 使用；ResearchEvent、Timeline、个性化、Digest、趋势与 Web UI 属于后续阶段。
+后端范围是 [PLAN](doc/PLAN.md) 的 Phase 0–11，现已增加 [Frontend MVP](doc/FRONTEND.md)：论文列表、详情与证据、主题页及分析任务。ResearchEvent、Timeline、个性化、Digest 和趋势属于后续阶段。
+
+## Web 页面
+
+先启动下方的 FastAPI，再另开终端：
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+打开 <http://127.0.0.1:5173>，可浏览 New / Hot、按主题和日期筛选、阅读摘要及前作比较、展开原文证据。点击生成分析前，在仓库根目录运行 `uv run python -m app.cli worker --jobs-only`；没有 worker 时任务会保持排队。
+
+前端构建、测试、令牌配置与 API 契约更新方式见 [前端开发文档](doc/FRONTEND.md)。
 
 ## 启动
 
