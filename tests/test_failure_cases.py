@@ -92,6 +92,7 @@ async def test_concurrent_ingestion_and_embedding_fallback(db_engine: AsyncEngin
 
     from test_end_to_end import FixtureCollector
 
+    from app.papers.admission import AdmissionService
     from app.papers.ingestion import IngestionService
 
     class BrokenEmbedding:
@@ -100,7 +101,13 @@ async def test_concurrent_ingestion_and_embedding_fallback(db_engine: AsyncEngin
         async def embed(self, texts: list[str]) -> list[list[float]]:
             raise RuntimeError("model unavailable")
 
-    results = await IngestionService(factory, BrokenEmbedding()).collect(
+    admission = AdmissionService(
+        factory,
+        FakeLLMProvider(lambda m, s: {"topics": [{"slug": "agent", "confidence": 0.9}]}),
+        load_taxonomy(Path("config/taxonomy.json")),
+        50,
+    )
+    results = await IngestionService(factory, admission, BrokenEmbedding()).collect(
         [FixtureCollector()], now - timedelta(days=7), now
     )
     assert results["fixture"]["status"] == "partial"

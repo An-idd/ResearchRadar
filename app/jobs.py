@@ -10,6 +10,7 @@ from app.collectors.base import PaperCollector
 from app.config import Settings
 from app.intelligence.service import IntelligenceService
 from app.observability import event
+from app.papers.admission import AdmissionService
 from app.papers.ingestion import IngestionService
 from app.providers.enrichment import EnrichmentProvider
 from app.service import RadarService
@@ -34,9 +35,17 @@ class Worker:
 
     async def cycle(self, since: datetime, until: datetime) -> None:
         result = await IngestionService(
-            self.factory, self.intelligence.embedding, self.settings.dedup_similarity_threshold
+            self.factory,
+            AdmissionService(
+                self.factory,
+                self.intelligence.provider,
+                self.intelligence.topics,
+                self.settings.classification_budget,
+                retry_failed=self.settings.retry_failed_admissions,
+            ),
+            self.intelligence.embedding,
+            self.settings.dedup_similarity_threshold,
         ).collect(self.collectors, since, until)
-        prepared = await self.intelligence.prepare(since, until)
         async with self.factory() as session:
             papers = list(
                 await session.scalars(
@@ -67,7 +76,7 @@ class Worker:
         event(
             "cycle_finished",
             sources=result,
-            classified=prepared,
+            accepted=sum(int(r.get("accepted", 0)) for r in result.values()),
             summary_budget=self.settings.summary_budget,
         )
 

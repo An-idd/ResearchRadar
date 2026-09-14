@@ -19,6 +19,13 @@ PROMPTS = {
     "topic_classifier:v1": (
         "Classify into supplied candidate topic slugs only. Return calibrated confidence."
     ),
+    "topic_classifier:v2": (
+        "Decide whether the paper's central contribution is directly relevant to the "
+        "supplied LLM research topic descriptions. Classify into candidate slugs only. "
+        "Keyword mentions alone, or generic use of evaluation, planning or reasoning "
+        "outside LLM research, do not establish relevance. Return an empty topics list "
+        "when none fits or evidence is insufficient. Return calibrated confidence."
+    ),
     "paper_screen:v1": (
         "Select papers with a substantive method, evaluation or capability "
         "contribution. Explain briefly."

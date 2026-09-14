@@ -25,7 +25,7 @@ async def db_engine() -> AsyncIterator[AsyncEngine]:
     url = settings.database_url.get_secret_value()
     if not url:
         pytest.fail("Configure .env.test with the dedicated Neon mvp-test database")
-    for path in (".env.development", ".env.local"):
+    for path in (".env", ".env.development", ".env.local"):
         other = Settings(_env_file=path).database_url.get_secret_value()
         if other and (make_url(other).host or "").replace("-pooler", "") == (
             make_url(url).host or ""

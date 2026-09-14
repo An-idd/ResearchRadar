@@ -18,6 +18,7 @@ from app.config import get_settings
 from app.intelligence.service import IntelligenceService
 from app.jobs import Worker
 from app.main import create_app
+from app.papers.admission import AdmissionService
 from app.papers.ingestion import IngestionService
 from app.providers.base import LLMProvider
 from app.providers.codex import CodexLLMProvider
@@ -81,7 +82,16 @@ async def execute(args: argparse.Namespace) -> None:
                 print(
                     json.dumps(
                         await IngestionService(
-                            factory, embedding, settings.dedup_similarity_threshold
+                            factory,
+                            AdmissionService(
+                                factory,
+                                provider,
+                                topics,
+                                settings.classification_budget,
+                                retry_failed=settings.retry_failed_admissions,
+                            ),
+                            embedding,
+                            settings.dedup_similarity_threshold,
                         ).collect(collectors, since, until)
                     )
                 )

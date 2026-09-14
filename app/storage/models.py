@@ -121,6 +121,25 @@ class GenerationRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class AdmissionRecord(Base):
+    """Minimal screening audit/cache; never stores rejected paper content."""
+
+    __tablename__ = "paper_admissions"
+    key: Mapped[str] = mapped_column(primary_key=True)
+    source: Mapped[str]
+    source_id: Mapped[str]
+    input_hash: Mapped[str]
+    policy_hash: Mapped[str]
+    status: Mapped[str]
+    classification: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    provider: Mapped[str]
+    model: Mapped[str]
+    prompt_version: Mapped[str]
+    usage: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    error: Mapped[str | None]
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class FullTextRecord(Base):
     __tablename__ = "full_text_documents"
     paper_id: Mapped[UUID] = mapped_column(ForeignKey("papers.id"), primary_key=True)

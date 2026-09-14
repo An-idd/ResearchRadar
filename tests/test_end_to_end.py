@@ -13,6 +13,7 @@ from app.domain import Classification, PaperComparison, PaperSummary, RawPaper, 
 from app.intelligence.service import IntelligenceService
 from app.jobs import Worker
 from app.main import create_app
+from app.papers.admission import AdmissionService
 from app.papers.ingestion import IngestionService
 from app.providers.fake import FakeEmbeddingProvider, FakeLLMProvider
 from app.ranking import RankingConfig
@@ -124,7 +125,10 @@ async def test_neon_pipeline_api_idempotency_and_recovery(db_engine: AsyncEngine
         intelligence = IntelligenceService(factory, provider, embedding, client, settings, topics)
         radar = RadarService(factory, ranking)
         worker = Worker(factory, intelligence, radar, collectors, FakeEnrichment(), settings)
-        result = await IngestionService(factory, embedding).collect(collectors, since, until)
+        admission = AdmissionService(factory, provider, topics, settings.classification_budget)
+        result = await IngestionService(factory, admission, embedding).collect(
+            collectors, since, until
+        )
         assert result["broken"]["status"] == "failed"
         assert result["fixture"]["status"] == "succeeded"
         await worker.cycle(since, until)

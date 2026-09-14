@@ -31,11 +31,15 @@ def shortlist(text: str, topics: list[TopicDefinition]) -> list[TopicDefinition]
 
 
 async def classify(
-    text: str, candidates: list[TopicDefinition], provider: LLMProvider
+    text: str,
+    candidates: list[TopicDefinition],
+    provider: LLMProvider,
+    *,
+    version: str = "topic_classifier:v1",
 ) -> Generation[Classification]:
     result = await provider.generate_structured(
         messages(
-            "topic_classifier:v1",
+            version,
             {"text": text, "candidates": [t.model_dump() for t in candidates]},
         ),
         Classification,

@@ -28,33 +28,7 @@ class PaperRepository:
             raise ValueError("empty normalized title")
         # ponytail: serialize metadata merges; use keyed locks if ingestion throughput requires it.
         await self.session.execute(text("SELECT pg_advisory_xact_lock(7261646172)"))
-        candidates = []
-        for column, identity in ((Paper.doi, raw.doi), (Paper.arxiv_id, raw.arxiv_id)):
-            if identity:
-                found = await self.session.scalar(select(Paper).where(column == identity))
-                if found:
-                    candidates.append(found)
-        source = await self.session.scalar(
-            select(PaperSourceRecord).where(
-                PaperSourceRecord.source == raw.source, PaperSourceRecord.source_id == raw.source_id
-            )
-        )
-        if source:
-            mapped = await self.session.get(Paper, source.paper_id)
-            if mapped:
-                candidates.append(mapped)
-        if len({p.id for p in candidates}) > 1:
-            raise ValueError("identity conflict: manual reconciliation required")
-        paper = candidates[0] if candidates else None
-        if paper is not None and identity_conflict(paper, raw):
-            raise ValueError("source has conflicting strong identifiers")
-        if paper is None:
-            same_title = await self.session.scalars(
-                select(Paper)
-                .where(Paper.normalized_title == title)
-                .order_by(Paper.created_at, Paper.id)
-            )
-            paper = next((p for p in same_title if not identity_conflict(p, raw)), None)
+        paper = await self.find_existing(raw)
         if paper is None and embedding is not None:
             distance = Paper.embedding.cosine_distance(embedding)
             nearest = await self.session.execute(
@@ -86,11 +60,54 @@ class PaperRepository:
                         for p, similarity in candidates_with_similarity
                     ],
                 }
+        return await self._save(raw, paper, observed_at, embedding, embedding_model)
+
+    async def find_existing(self, value: RawPaper) -> Paper | None:
+        """Resolve exact identities without creating or changing a paper."""
+        raw = normalize(value)
+        title = normalize_title(raw.title)
+        candidates = []
+        for column, identity in ((Paper.doi, raw.doi), (Paper.arxiv_id, raw.arxiv_id)):
+            if identity:
+                found = await self.session.scalar(select(Paper).where(column == identity))
+                if found:
+                    candidates.append(found)
+        source = await self.session.scalar(
+            select(PaperSourceRecord).where(
+                PaperSourceRecord.source == raw.source, PaperSourceRecord.source_id == raw.source_id
+            )
+        )
+        if source:
+            mapped = await self.session.get(Paper, source.paper_id)
+            if mapped:
+                candidates.append(mapped)
+        if len({p.id for p in candidates}) > 1:
+            raise ValueError("identity conflict: manual reconciliation required")
+        paper = candidates[0] if candidates else None
+        if paper is not None and identity_conflict(paper, raw):
+            raise ValueError("source has conflicting strong identifiers")
+        if paper is None:
+            same_title = await self.session.scalars(
+                select(Paper)
+                .where(Paper.normalized_title == title)
+                .order_by(Paper.created_at, Paper.id)
+            )
+            paper = next((p for p in same_title if not identity_conflict(p, raw)), None)
+        return paper
+
+    async def _save(
+        self,
+        raw: RawPaper,
+        paper: Paper | None,
+        observed_at: datetime,
+        embedding: list[float] | None,
+        embedding_model: str | None,
+    ) -> Paper:
         if paper is None:
             paper = Paper(
                 canonical_id=canonical_id(raw),
                 title=raw.title,
-                normalized_title=title,
+                normalized_title=normalize_title(raw.title),
                 abstract=raw.abstract,
                 authors=raw.authors,
                 published_at=raw.published_at,

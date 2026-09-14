@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     taxonomy_path: Path = Path("config/taxonomy.json")
     ranking_path: Path = Path("config/ranking.json")
     classification_budget: int = Field(default=50, ge=0, le=1000)
+    retry_failed_admissions: bool = False
     summary_budget: int = Field(default=5, ge=0, le=100)
     fulltext_enabled: bool = True
     max_pdf_bytes: int = Field(default=15_000_000, gt=0)

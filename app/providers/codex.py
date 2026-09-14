@@ -99,7 +99,7 @@ class CodexLLMProvider:
                     cwd=folder,
                     env=env,
                     timeout=self.timeout,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutError("codex request timed out") from exc

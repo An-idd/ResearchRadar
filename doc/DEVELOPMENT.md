@@ -634,18 +634,22 @@ Normalize
    ↓
 Canonical Identity
    ↓
-Dedup
+Exact Identity Lookup
    ↓
-Persist
+Keyword Shortlist
    ↓
-Topic Classification
+Topic Classification / Relevance Admission
    ↓
-Embedding
+Embedding + Semantic Dedup (admitted candidates)
+   ↓
+Persist Paper + Sources + Topics (atomic; relevant papers only)
    ↓
 Metadata Enrichment
    ↓
 Scoring
 ```
+
+2026-09-12：按用户要求，论文主库只接收已确认与配置主题相关的论文。精确身份命中的已收录相关论文可直接合并新来源；新候选先关键词初筛，再用结构化分类确认相关性（阈值 0.60），之后才生成去重向量并事务入库。无关候选不保存正文、元数据详情或向量，仅保留不含论文内容的审核/缓存记录。失败与预算不足不等同于无关，重新采集到时可重试。详见 [ADMISSION.md](ADMISSION.md)。
 
 ---
 

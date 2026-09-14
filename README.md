@@ -62,7 +62,8 @@ uv run python -m app.cli worker --jobs-only
 | `CODEX_TIMEOUT_SECONDS` | 每次请求 180 秒，超时/限流最多 3 次尝试 |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5`，384 维；变更模型需重算，变更维度需迁移 |
 | `DEDUP_SIMILARITY_THRESHOLD` | 默认 0.96 自动合并；0.90 到此阈值之间在来源 metadata 中标记 potential_duplicates |
-| `CLASSIFICATION_BUDGET` | 每轮最多处理 50 篇关键词候选；结果缓存避免重复调用 |
+| `CLASSIFICATION_BUDGET` | 每轮采集所有来源合计最多新分类 50 篇；已确认论文和缓存结果不占预算；失败调用占预算 |
+| `RETRY_FAILED_ADMISSIONS` | 默认 `false`；修复认证/配置/输出错误后可临时设为 `true`，显式重试这些失败候选 |
 | `SUMMARY_BUDGET` | 每轮最多对排名前 5 篇相关论文筛选和分析 |
 | `COLLECTOR_LIMIT` | 每个来源每轮最多扫描/返回 200 条；不是全量历史回填 |
 | `FULLTEXT_ENABLED` | `true`，仅入选论文下载全文 |
@@ -90,7 +91,7 @@ Windows 上 ONNX Runtime 1.30.0 / 1.23.2 在本机导入崩溃；当前锁定已
 | `GET /api/v1/topics/{slug}` | 单个主题 |
 | `GET /api/v1/topics/{slug}/papers` | 同 Feed 的时间窗口、排序、分页参数 |
 
-时间窗口为带时区 ISO 8601 的 **[since, until)**，默认最近 7 天，最长 365 天；排序时间基准为 `until`。未知资源 404，错误参数 422。榜单只展示已关联主题的论文，未分类记录仍可通过论文详情访问。响应包含排序信号和有效权重；缺失指标为 null，不冒充 0。MVP 的 citation_count 是数量，不是引用增速。
+时间窗口为带时区 ISO 8601 的 **[since, until)**，默认最近 7 天，最长 365 天；排序时间基准为 `until`。未知资源 404，错误参数 422。新采集论文必须先确认相关主题才入库；榜单再按发表时间和主题筛选，因此榜单总数仍可能小于数据库总数。升级前已有的未分类记录不会被迁移自动删除，仍可通过论文详情访问。响应包含排序信号和有效权重；缺失指标为 null，不冒充 0。MVP 的 citation_count 是数量，不是引用增速。
 
 ```powershell
 Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/feed?type=new&topic=agent&limit=20'
@@ -105,7 +106,11 @@ uv run python -m app.cli feed --type hot --topic rag --days 7
 
 去重按 DOI、arXiv ID、来源映射、标准化标题、embedding fallback 顺序；保留所有来源记录。强标识冲突拒绝自动合并并记录失败，需人工核对。无强冲突且余弦相似度 ≥0.96 时语义合并。元数据写入用数据库事务锁串行化，适合 MVP 批量采集。
 
-主题配置在 [taxonomy.json](config/taxonomy.json)，低于 0.60 不自动关联。排序权重、衰减和指标尺度在 [ranking.json](config/ranking.json)。分类先做关键词候选筛选；排名靠前的论文经低成本筛选后才进行全文分析。
+主题配置在 [taxonomy.json](config/taxonomy.json)，低于 0.60 不自动关联。采集现在先做关键词初筛，再通过 `topic_classifier:v2` 确认中心贡献与 LLM 主题相关；只有至少一个主题达到阈值，才在同一事务中写入论文、来源详情、指标和主题。无关候选不保存标题、摘要、全文或向量；仅在 `paper_admissions` 保存来源 ID、输入/策略哈希、状态等简短审核与缓存记录。
+
+`collect` 和 `run-once` / `worker` 的采集过程都会调用配置的 LLM Provider；`collect` 不再是仅获取元数据的操作。预算不足标记 `deferred`，调用/校验失败标记 `failed`，均不将候选入库。再次采集时自动重试预算延期、超时、429 和 5xx 等暂时故障；认证或输出校验错误需要修复后显式重试。缓存命中不占新分类预算。升级先显式执行 `alembic upgrade head`，再重启 worker；使用本次创建的 `.env` 时设置 `RADAR_ENV_FILE=.env`。状态、返回计数、历史数据范围及重试限制见 [入库筛选说明](doc/ADMISSION.md)。
+
+排序权重、衰减和指标尺度在 [ranking.json](config/ranking.json)。入库后，排名靠前的论文再经低成本筛选后进行全文分析。
 
 每个非空摘要/比较字段必须带证据，引用包含 paper_id、chunk_id 与原文 quote。程序验证引用存在于实际输入，并持久化源文本、页码/偏移、输入 hash、provider/model、prompt 版本和可获得的用量。**引用位置正确不等于语义一定正确**，真实研究结论仍需人工抽样审查。缺失信息使用 null / 空列表。PDF 获取/解析失败回退并标记 abstract-only；不支持 OCR、加密 PDF 或超过 100 页的 PDF。下载仅允许 arxiv.org、export.arxiv.org、openreview.net 的 HTTPS 地址，并逐次验证重定向。
 

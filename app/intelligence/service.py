@@ -26,7 +26,7 @@ from app.papers.parser import fetch_pdf, parse_pdf
 from app.providers.base import EmbeddingProvider, LLMProvider
 from app.providers.embedding import validate_vectors
 from app.storage.intelligence import IntelligenceRepository
-from app.storage.models import Paper
+from app.storage.models import Paper, PaperTopic
 from app.topics import shortlist
 
 
@@ -130,29 +130,42 @@ class IntelligenceService:
         return result.output, key
 
     async def classify_and_embed(self, paper: Paper) -> bool:
-        source = abstract_source(paper)
-        candidates = shortlist(metadata_text(paper), self.topics)
-        if not candidates:
-            return False
+        # Admission already confirmed topics. Summary generation must not run a second
+        # classifier that can erase them and leave a newly admitted paper unclassified.
+        async with self.factory() as session:
+            confirmed = await session.scalar(
+                select(PaperTopic.paper_id)
+                .where(
+                    PaperTopic.paper_id == paper.id,
+                    PaperTopic.topic_slug.in_([t.slug for t in self.topics]),
+                    PaperTopic.confidence >= 0.6,
+                )
+                .limit(1)
+            )
+        if not confirmed:
+            source = abstract_source(paper)
+            candidates = shortlist(metadata_text(paper), self.topics)
+            if not candidates:
+                return False
 
-        def valid(result: Classification) -> None:
-            slugs = [t.slug for t in result.topics]
-            if len(set(slugs)) != len(slugs) or set(slugs) - {t.slug for t in candidates}:
-                raise ValueError("unknown or duplicate topic slug")
+            def valid(result: Classification) -> None:
+                slugs = [t.slug for t in result.topics]
+                if len(set(slugs)) != len(slugs) or set(slugs) - {t.slug for t in candidates}:
+                    raise ValueError("unknown or duplicate topic slug")
 
-        result, _ = await self.generate(
-            paper.id,
-            "topic_classifier:v1",
-            {"text": source.chunks[0].text, "candidates": [t.model_dump() for t in candidates]},
-            Classification,
-            [source],
-            valid,
-        )
-        result.topics = [t for t in result.topics if t.confidence >= 0.6]
-        async with self.factory() as session, session.begin():
-            await IntelligenceRepository(session).set_topics(paper.id, result)
-        if not result.topics:
-            return False
+            result, _ = await self.generate(
+                paper.id,
+                "topic_classifier:v2",
+                {"text": source.chunks[0].text, "candidates": [t.model_dump() for t in candidates]},
+                Classification,
+                [source],
+                valid,
+            )
+            result.topics = [t for t in result.topics if t.confidence >= 0.6]
+            async with self.factory() as session, session.begin():
+                await IntelligenceRepository(session).set_topics(paper.id, result)
+            if not result.topics:
+                return False
         input_hash = fingerprint(metadata_text(paper))
         if (
             paper.embedding_model != self.embedding.model
